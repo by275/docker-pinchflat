@@ -1,0 +1,28 @@
+#!/usr/bin/with-contenv bash
+
+fix_ownership() {
+    find "$@" \! \( -uid "$(id -u abc)" -gid "$(id -g abc)" \) -print0 | \
+        xargs -0 --no-run-if-empty chown -h abc:abc
+}
+
+echo "*** fixing permissions..."
+fix_ownership \
+  /config \
+  /downloads \
+  /etc/elixir_tzdata_data \
+  /etc/yt-dlp \
+  /app/bin
+
+echo "*** checking permissions..."
+if ! s6-setuidgid abc \
+  pinchflat eval Pinchflat.Release.check_file_permissions; then
+  echo "*** permission error!!! Exiting...."
+  exit 1
+fi
+
+echo "*** setting umask to ${UMASK:-022}..."
+umask "${UMASK:-022}"
+
+echo "*** preparing DB..."
+s6-setuidgid abc \
+  pinchflat eval Pinchflat.Release.migrate

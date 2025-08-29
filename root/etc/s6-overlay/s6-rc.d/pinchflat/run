@@ -1,0 +1,6 @@
+#!/usr/bin/with-contenv bash
+
+cmd="pinchflat start"
+echo "*** executing => $cmd"
+PHX_SERVER=true exec s6-setuidgid abc \
+    $cmd
